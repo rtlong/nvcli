@@ -1,20 +1,20 @@
 package main
 
-type match struct {
-	Path    string
-	Results []result
-	Score   int
-}
-
 type result interface {
+	LineNo() int
 	Path() string
-	Snippet() string
 	Score() int
+	Snippet() string
 }
 
 type contentResult struct {
+	lineno  int
 	path    string
 	snippet string
+}
+
+func (r contentResult) LineNo() int {
+	return r.lineno
 }
 
 func (r contentResult) Path() string {
@@ -32,6 +32,10 @@ func (r contentResult) Score() int {
 type pathResult struct {
 	path          string
 	basenameMatch bool
+}
+
+func (r pathResult) LineNo() int {
+	return 0
 }
 
 func (r pathResult) Path() string {

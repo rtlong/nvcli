@@ -6,10 +6,14 @@ import "path/filepath"
 
 type serializer func([]match) string
 
+const newFileDescription = "NEW"
+
 func getSerializer(format string) (serializer, error) {
 	switch format {
 	case "text":
 		return SerializeText, nil
+	case "grep":
+		return SerializeGrep, nil
 	case "alfred-json":
 		return SerializeAlfredJSON, nil
 	default:
@@ -22,21 +26,33 @@ func SerializeText(matches []match) string {
 	str := ""
 
 	for _, m := range matches {
-		snip := m.Results[0].Snippet()
-		str = str + fmt.Sprintf("%02d %s: %s\n", m.Score, m.Path, snip)
+		var snip string
+		if len(m.Results) == 0 {
+			snip = newFileDescription
+		} else {
+			snip = m.Snippet()
+		}
+		str = str + fmt.Sprintf("%s: %s\n", m.Path, snip)
 	}
 
 	return str
 }
 
-type alfredResult struct {
-	Items []alfredItem `json:"items"`
-}
-type alfredItem struct {
-	Type     string `json:"type"`
-	Title    string `json:"title"`
-	Subtitle string `json:"subtitle"`
-	Arg      string `json:"arg"`
+// SerializeGrep formats results as a format like grep's output (but this isn't exactly appropriate)
+func SerializeGrep(matches []match) string {
+	str := ""
+
+	for _, m := range matches {
+		if len(m.Results) == 0 {
+			str = str + fmt.Sprintf("%s:%d:%s\n", m.Path, 0, newFileDescription)
+		} else {
+			for _, r := range m.Results {
+				str = str + fmt.Sprintf("%s:%d:%s\n", m.Path, r.LineNo(), r.Snippet())
+			}
+		}
+	}
+
+	return str
 }
 
 // SerializeAlfredJSON formats results as JSON for Alfred.app workflows on OSX
@@ -56,10 +72,10 @@ func SerializeAlfredJSON(matches []match) string {
 
 	for _, m := range matches {
 		var snip string
-		if m.Results != nil {
-			snip = m.Results[0].Snippet()
+		if len(m.Results) == 0 {
+			snip = newFileDescription
 		} else {
-			snip = "Create new file"
+			snip = m.Snippet()
 		}
 
 		relPath, err := filepath.Rel(*notesPath, m.Path)
@@ -77,4 +93,15 @@ func SerializeAlfredJSON(matches []match) string {
 	bytes, err := json.Marshal(alfred)
 	handleError(err)
 	return string(bytes)
+}
+
+type alfredResult struct {
+	Items []alfredItem `json:"items"`
+}
+
+type alfredItem struct {
+	Type     string `json:"type"`
+	Title    string `json:"title"`
+	Subtitle string `json:"subtitle"`
+	Arg      string `json:"arg"`
 }

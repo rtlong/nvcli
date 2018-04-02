@@ -2,6 +2,22 @@ package main
 
 import "sort"
 
+type match struct {
+	Path    string
+	Results []result
+	Score   int
+}
+
+func (m *match) Snippet() (snip string) {
+	for _, r := range m.Results {
+		snip = r.Snippet()
+		if snip != "" {
+			return
+		}
+	}
+	return
+}
+
 type matchset struct {
 	matches    map[string]*match // map keyed by path for collating results
 	sortedKeys []string
@@ -12,33 +28,34 @@ func newMatchset() (ms matchset) {
 	return ms
 }
 
-func (ms *matchset) SortedMatches() (matches []match) {
-	ms.sortedKeys = []string{}
-	for k := range ms.matches {
-		ms.sortedKeys = append(ms.sortedKeys, k)
+func (ms *matchset) Add(path string) *match {
+	m := &match{
+		Path:    path,
+		Results: []result{},
+		Score:   0,
 	}
-
-	sort.Sort(ms)
-
-	for _, k := range ms.sortedKeys {
-		matches = append(matches, *ms.matches[k])
-	}
-	return
+	ms.matches[path] = m
+	ms.sortedKeys = append(ms.sortedKeys, path)
+	return m
 }
 
 func (ms *matchset) AddResult(r result) {
 	var m *match
-	m, ok := ms.matches[r.Path()]
+	path := r.Path()
+	m, ok := ms.matches[path]
 	if !ok {
-		m = &match{
-			Path:    r.Path(),
-			Results: []result{},
-			Score:   1,
-		}
-		ms.matches[r.Path()] = m
+		m = ms.Add(path)
 	}
 	m.Results = append(m.Results, r)
 	m.Score = m.Score + r.Score()
+}
+
+func (ms *matchset) SortedMatches() (matches []match) {
+	sort.Sort(ms) // sort sortedKeys
+	for _, k := range ms.sortedKeys {
+		matches = append(matches, *ms.matches[k])
+	}
+	return
 }
 
 // implement sort.Interface

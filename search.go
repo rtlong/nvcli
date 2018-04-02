@@ -7,6 +7,7 @@ import "os/exec"
 import "os"
 import "bufio"
 import "strings"
+import "strconv"
 import "path/filepath"
 
 type searchQuery struct {
@@ -29,6 +30,7 @@ func parseQuery(input string) *searchQuery {
 func searchNotes(q *searchQuery) []match {
 	var wg sync.WaitGroup
 	matchset := newMatchset()
+	matchset.Add(filepath.Join(*notesPath, q.original+*extension))
 
 	results := make(chan result)
 	wg.Add(2)
@@ -44,9 +46,7 @@ func searchNotes(q *searchQuery) []match {
 		matchset.AddResult(r)
 	}
 
-	return append(matchset.SortedMatches(), match{
-		Path: filepath.Join(*notesPath, q.original+".md"),
-	})
+	return matchset.SortedMatches()
 }
 
 func searchByPath(query *searchQuery, results chan result, wg *sync.WaitGroup) {
@@ -93,9 +93,11 @@ func searchByContent(query *searchQuery, results chan result, wg *sync.WaitGroup
 	for scanner.Scan() {
 		line := scanner.Text()
 		parts := strings.SplitN(line, ":", 3)
+		lineno, _ := strconv.Atoi(parts[1])
 		// fmt.Printf("%#v\n", parts)
 		results <- contentResult{
 			path:    parts[0],
+			lineno:  lineno,
 			snippet: parts[2],
 		}
 	}
