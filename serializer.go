@@ -44,10 +44,10 @@ func SerializeGrep(matches []match) string {
 
 	for _, m := range matches {
 		if len(m.Results) == 0 {
-			str = str + fmt.Sprintf("%s:%d:%s\n", m.Path, 0, newFileDescription)
+			str = str + fmt.Sprintf("%s:%d:%f:%s\n", m.Path, 0, m.Score, newFileDescription)
 		} else {
 			for _, r := range m.Results {
-				str = str + fmt.Sprintf("%s:%d:%s\n", m.Path, r.LineNo(), r.Snippet())
+				str = str + fmt.Sprintf("%s:%d:%f:%s\n", m.Path, r.LineNo(), m.Score, r.Snippet())
 			}
 		}
 	}

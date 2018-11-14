@@ -1,0 +1,14 @@
+#!/bin/bash
+
+set -uo pipefail
+
+dir="$(dirname $0)"
+echo "> $0 $@" >> $dir/logfile
+echo "cwd: $PWD" >> $dir/logfile
+echo "---- ----" >> $dir/logfile
+${dir}/nvcli "$@" 2>&1 | tee -a $dir/logfile
+ex=$?
+echo "++++ \$?=$ex ++++" >> $dir/logfile
+echo "" >> $dir/logfile
+
+exit $?

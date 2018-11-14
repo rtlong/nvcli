@@ -8,6 +8,7 @@ import "os"
 import "bufio"
 import "strings"
 import "strconv"
+import p "path"
 import "path/filepath"
 
 type searchQuery struct {
@@ -53,6 +54,10 @@ func searchByPath(query *searchQuery, results chan result, wg *sync.WaitGroup) {
 	paths := make(chan string)
 	go walkTreeForFiles(*notesPath, paths)
 	for path := range paths {
+		if pathMatchesQuery(query, p.Base(path)) {
+			results <- pathResult{path: path, basenameMatch: true}
+			continue
+		}
 		if pathMatchesQuery(query, path) {
 			results <- pathResult{path: path}
 		}
@@ -106,5 +111,3 @@ func searchByContent(query *searchQuery, results chan result, wg *sync.WaitGroup
 	// handleError(err)
 	wg.Done()
 }
-
-// func execScan(cmd, scanner)

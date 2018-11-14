@@ -5,7 +5,7 @@ import "sort"
 type match struct {
 	Path    string
 	Results []result
-	Score   int
+	Score   float32
 }
 
 func (m *match) Snippet() (snip string) {
@@ -32,7 +32,7 @@ func (ms *matchset) Add(path string) *match {
 	m := &match{
 		Path:    path,
 		Results: []result{},
-		Score:   0,
+		Score:   1,
 	}
 	ms.matches[path] = m
 	ms.sortedKeys = append(ms.sortedKeys, path)
@@ -47,7 +47,7 @@ func (ms *matchset) AddResult(r result) {
 		m = ms.Add(path)
 	}
 	m.Results = append(m.Results, r)
-	m.Score = m.Score + r.Score()
+	m.Score = m.Score * r.Score()
 }
 
 func (ms *matchset) SortedMatches() (matches []match) {

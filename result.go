@@ -1,9 +1,11 @@
 package main
 
+import "strings"
+
 type result interface {
 	LineNo() int
 	Path() string
-	Score() int
+	Score() float32
 	Snippet() string
 }
 
@@ -25,8 +27,11 @@ func (r contentResult) Snippet() string {
 	return r.snippet
 }
 
-func (r contentResult) Score() int {
-	return 1
+func (r contentResult) Score() float32 {
+	if strings.HasPrefix(r.path, "Archive/") {
+		return 1.01
+	}
+	return 1.1
 }
 
 type pathResult struct {
@@ -46,9 +51,12 @@ func (r pathResult) Snippet() string {
 	return ""
 }
 
-func (r pathResult) Score() int {
-	if r.basenameMatch {
-		return 100
+func (r pathResult) Score() float32 {
+	if strings.HasPrefix(r.path, "Archive/") {
+		return 1.5
 	}
-	return 20
+	if r.basenameMatch {
+		return 2
+	}
+	return 1.5
 }
