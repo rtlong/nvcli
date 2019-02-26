@@ -14,26 +14,24 @@ import "gopkg.in/alecthomas/kingpin.v2"
 // 6. if interactive, ENTER will open selected file using $EDITOR
 
 var (
-	app           = kingpin.New("nvcli", "find notes and edit selected, interactively")
-	interactive   = app.Command("interactive", "Run interactively").Default()
-	batch         = app.Command("batch", "Run a single query and output matches in FORMAT specified")
-	format        = batch.Flag("format", "Set the output format").Required().String()
-	query         = batch.Arg("query", "Filter string for finding notes").Required().String()
-	notesPathFlag = app.Flag("notes-path", "Directory your notes live in").ExistingDir()
-	extension     = app.Flag("extension", "File extension for new files (include the '.')").Default(".md").String()
-
-	notesPath *string
+	app         = kingpin.New("nvcli", "find notes and edit selected, interactively")
+	interactive = app.Command("interactive", "Run interactively").Default()
+	batch       = app.Command("batch", "Run a single query and output matches in FORMAT specified")
+	format      = batch.Flag("format", "Set the output format").Required().String()
+	query       = batch.Arg("query", "Filter string for finding notes").Required().String()
+	notesPath   = app.Flag("dir", "Directory your notes live in").ExistingDir()
+	extension   = app.Flag("extension", "File extension for new files (include the '.')").Default(".md").String()
 )
 
 func main() {
-	if *notesPathFlag != "" {
-		notesPath = notesPathFlag
-	} else {
+	command := kingpin.MustParse(app.Parse(os.Args[1:]))
+
+	if *notesPath == "" {
 		cwd, err := os.Getwd()
 		handleError(err)
 		notesPath = &cwd
 	}
-	command := kingpin.MustParse(app.Parse(os.Args[1:]))
+
 	switch command {
 	case interactive.FullCommand():
 		fmt.Println("interactive not yet implemented")
